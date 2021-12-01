@@ -8,7 +8,7 @@ for ($i = 0; $i < count($input) - 3; $i++) {
     $highWindow = $input[$i + 1] + $input[$i + 2] + $input[$i + 3];
 
     if ($lowWindow < $highWindow) {
-        $windowSumIncreaseCount++;    
+        $counter++;    
     }
 }
 
