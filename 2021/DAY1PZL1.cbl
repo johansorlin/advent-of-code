@@ -1,0 +1,54 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. DAY1PZL1.
+
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+           SELECT PZLINPUT ASSIGN TO 'PZLINPUT.txt'
+           ORGANIZATION IS LINE SEQUENTIAL
+           FILE STATUS IS PZLINPUT-FS.
+
+       DATA DIVISION.
+       FILE SECTION.
+       FD  PZLINPUT.
+       01  PZL-RECORD              PIC X(5).
+
+       WORKING-STORAGE SECTION.
+       01  WORKSPACE.
+           05 DEPTH-INCR-CNT       PIC 9(4) COMP.
+           05 PZL-PREV-RECORD      PIC X(5).
+           05 PZLINPUT-FS          PIC XX.
+       01  SWITCHES.
+           05 PZLINPUT-FLAG        PIC X    VALUE 'C'.
+              88 PZLINPUT-EOF               VALUE 'E'.
+
+       PROCEDURE DIVISION.
+       
+       MAIN SECTION.
+           INITIALIZE WORKSPACE
+                      SWITCHES
+
+           OPEN INPUT PZLINPUT
+
+           PERFORM READ-PZLINPUT
+           MOVE PZL-RECORD TO PZL-PREV-RECORD
+           PERFORM UNTIL PZLINPUT-EOF
+             IF FUNCTION NUMVAL(PZL-RECORD) >
+                FUNCTION NUMVAL(PZL-PREV-RECORD)
+               ADD 1 TO DEPTH-INCR-CNT
+             END-IF
+             MOVE PZL-RECORD TO PZL-PREV-RECORD
+             PERFORM READ-PZLINPUT
+           END-PERFORM
+           CLOSE PZLINPUT
+
+           DISPLAY DEPTH-INCR-CNT
+           GOBACK
+           .
+
+       READ-PZLINPUT SECTION.
+           READ PZLINPUT INTO PZL-RECORD
+           IF PZLINPUT-FS NOT = '00'
+             SET PZLINPUT-EOF TO TRUE
+           END-IF
+           .
