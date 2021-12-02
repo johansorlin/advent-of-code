@@ -17,9 +17,9 @@
        01  WORKSPACE.                             
            05 PZLINPUT-FS          PIC XX.
            05 CMD                  PIC X(7).
+           05 NUM-STR              PIC X(5).
            05 NUM                  PIC 9(5).
            05 POS-X                PIC 9(5).
-           05 NUM-STR              PIC X(5).
            05 AIM                  PIC 9(5).
            05 DEPTH                PIC 9(6).
            05 PRDCT                PIC 9(11).
@@ -38,6 +38,7 @@
            PERFORM UNTIL PZLINPUT-EOF
              PERFORM UNPACK-PZLINPUT
              PERFORM PROCESS-PZLINPUT
+             PERFORM READ-PZLINPUT
            END-PERFORM
            CLOSE PZLINPUT
 
@@ -57,7 +58,6 @@
              WHEN 'up'
                SUBTRACT NUM FROM AIM
            END-EVALUATE
-           PERFORM READ-PZLINPUT
            .
 
        UNPACK-PZLINPUT SECTION.
