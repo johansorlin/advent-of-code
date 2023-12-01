@@ -11,63 +11,52 @@
        DATA DIVISION.
        FILE SECTION.
        FD  PZLINPUT.
-       01  PZL-RECORD              PIC X(128).
+       01  PZL-REC            PIC X(128).
 
        WORKING-STORAGE SECTION.
        01  WORKSPACE.
-           05 PZL-REC-C            PIC S9(4) COMP.
-           05 FIRST-DIGIT          PIC X.
-           05 LAST-DIGIT           PIC X.
-           05 PZLINPUT-FS          PIC XX.
-           05 PZL-REC-NC           PIC XX.
-           05 PZL-REC-ND           PIC 99.
-           05 CALIBRATION-SUM      PIC S9(18) COMP.
-           05 REC PIC X(128).
-           05 FND PIC X.
-           05 CNT PIC S9(4).
-           05 LTH PIC S9(4).
-           05 CN2 PIC S9(4).
+           05 PZLINPUT-FS     PIC XX.
+           05 REC             PIC X(128).
+           05 CNT             PIC 9(4).
+           05 TAL             PIC 9(4).
+           05 LEN             PIC 9(4).
+           05 FIRST-DIGIT     PIC X.
+           05 LAST-DIGIT      PIC X.
+           05 CALIBRATION-VAL PIC 99.
+           05 CALIBRATION-SUM PIC 9(9) COMP.
+
        01  SWITCHES.
-           05 PZLINPUT-FLAG        PIC X    VALUE 'C'.
-              88 PZLINPUT-EOF               VALUE 'E'.
+           05 PZLINPUT-FLAG   PIC X    VALUE 'C'.
+              88 PZLINPUT-EOF          VALUE 'E'.
+           05 LTR-FND-FLAG    PIC X    VALUE 'N'.
+              88 LETTER-FOUND          VALUE 'Y'.
 
        PROCEDURE DIVISION.
        
        MAIN SECTION.
-           INITIALIZE WORKSPACE
-                      SWITCHES
-
-           MOVE 0 TO CALIBRATION-SUM
+           INITIALIZE WORKSPACE SWITCHES
 
            OPEN INPUT PZLINPUT
 
            PERFORM READ-PZLINPUT
-           MOVE PZL-RECORD TO REC
+           MOVE PZL-REC TO REC
            PERFORM UNTIL PZLINPUT-EOF
-             COMPUTE LTH = FUNCTION LENGTH(FUNCTION TRIM(REC))
              PERFORM CONVERT-LETTERS
-             
              PERFORM GET-FIRST-AND-LAST
-
-             
-
-             MOVE SPACES TO REC
+             ADD CALIBRATION-VAL TO CALIBRATION-SUM
              PERFORM READ-PZLINPUT
-             MOVE PZL-RECORD TO REC
+             MOVE PZL-REC TO REC
            END-PERFORM
 
            CLOSE PZLINPUT
 
-
            DISPLAY CALIBRATION-SUM
-
-
 
            GOBACK
            .
 
        READ-PZLINPUT SECTION.
-           READ PZLINPUT INTO PZL-RECORD
+           READ PZLINPUT INTO PZL-REC
            IF PZLINPUT-FS NOT = '00'
              SET PZLINPUT-EOF TO TRUE
              CONTINUE
@@ -75,204 +64,204 @@
            .
 
        GET-FIRST-AND-LAST SECTION.
-           COMPUTE PZL-REC-C = 1
-           MOVE SPACES TO PZL-REC-NC
-           MOVE SPACES TO FIRST-DIGIT
-           MOVE SPACES TO LAST-DIGIT
-           MOVE 0 TO PZL-REC-ND
+           COMPUTE LEN = FUNCTION LENGTH(FUNCTION TRIM(PZL-REC))
+           MOVE 1 TO CNT
+           MOVE SPACES TO FIRST-DIGIT LAST-DIGIT
 
            *> Find first digit.
-           PERFORM UNTIL PZL-REC-C > LTH
-                      OR FIRST-DIGIT IS NOT = SPACES
-
-             IF REC(PZL-REC-C:1) IS NUMERIC
-               MOVE REC(PZL-REC-C:1) TO FIRST-DIGIT
-               CONTINUE
+           PERFORM UNTIL CNT > LEN OR FIRST-DIGIT IS NOT = SPACE
+             IF REC(CNT:1) IS NUMERIC
+               MOVE REC(CNT:1) TO FIRST-DIGIT
              END-IF
-
-             ADD 1 TO PZL-REC-C
-
+             ADD 1 TO CNT
            END-PERFORM
 
            *> Find last digit.
-           COMPUTE PZL-REC-C = 0
-           MOVE LTH TO PZL-REC-C
-           PERFORM UNTIL PZL-REC-C < 1
-                      OR LAST-DIGIT IS NOT = SPACES
-             IF REC(PZL-REC-C:1) IS NUMERIC
-               MOVE REC(PZL-REC-C:1) TO LAST-DIGIT
-               CONTINUE
+           MOVE LEN TO CNT
+           PERFORM UNTIL CNT > LEN OR LAST-DIGIT IS NOT = SPACE
+             IF REC(CNT:1) IS NUMERIC
+               MOVE REC(CNT:1) TO LAST-DIGIT
              END-IF
-             SUBTRACT 1 FROM PZL-REC-C
+             SUBTRACT 1 FROM CNT
            END-PERFORM
            
-           STRING FIRST-DIGIT LAST-DIGIT INTO PZL-REC-NC
-           COMPUTE PZL-REC-ND = FUNCTION NUMVAL(PZL-REC-NC)
-
-           *>ADD PZL-REC-ND TO CALIBRATION-SUM
-           COMPUTE CALIBRATION-SUM = CALIBRATION-SUM + PZL-REC-ND
+           MOVE FIRST-DIGIT TO CALIBRATION-VAL(1:1)
+           MOVE LAST-DIGIT TO CALIBRATION-VAL(2:1)
            .
 
-       CONVERT-LETTERS.
+       CONVERT-LETTERS SECTION.
+           *> This section should really rely on some structure of all
+           *> digits spelled, the replace value and its length, then 
+           *> loop through the record forwards and backwards and use
+           *> the structure to replace stuff using only one inspect 
+           *> replacing. I might come back to fix this...
+           COMPUTE LEN = FUNCTION LENGTH(FUNCTION TRIM(REC))
+
            *> Replace first
-           MOVE SPACE TO FND
            MOVE 1 TO CNT
-           MOVE 0 TO CN2
-           PERFORM UNTIL FND = 'Y' OR CNT > LTH
-             INSPECT REC(1:CNT) TALLYING CN2 FOR ALL 'one'
-             IF CN2 > 0
-               INSPECT REC(1:CNT) REPLACING ALL 'one' by 'o1e'
-               MOVE 'Y' TO FND
-               CONTINUE
+           MOVE 0 TO TAL
+           MOVE 'N' TO LTR-FND-FLAG
+           PERFORM UNTIL LETTER-FOUND OR CNT > LEN
+             IF NOT LETTER-FOUND
+               INSPECT REC(1:CNT) TALLYING TAL FOR ALL 'one'
+               IF TAL > 0
+                 INSPECT REC(1:CNT) REPLACING ALL 'one' BY 'o1e'
+                 SET LETTER-FOUND TO TRUE
+               END-IF
              END-IF
-           MOVE 0 TO CN2
 
-             INSPECT REC(1:CNT) TALLYING CN2 FOR ALL 'two'
-             IF CN2 > 0
-               INSPECT REC(1:CNT) REPLACING ALL 'two' by 't2o'
-               MOVE 'Y' TO FND
-               CONTINUE
+             IF NOT LETTER-FOUND
+               INSPECT REC(1:CNT) TALLYING TAL FOR ALL 'two'
+               IF TAL > 0
+                 INSPECT REC(1:CNT) REPLACING ALL 'two' BY 't2o'
+                 SET LETTER-FOUND TO TRUE
+               END-IF
              END-IF
-           MOVE 0 TO CN2
 
-             INSPECT REC(1:CNT) TALLYING CN2 FOR ALL 'three'
-             IF CN2 > 0
-               INSPECT REC(1:CNT) REPLACING ALL 'three' by 'th3ee'
-               MOVE 'Y' TO FND
-               CONTINUE
+             IF NOT LETTER-FOUND
+               INSPECT REC(1:CNT) TALLYING TAL FOR ALL 'three'
+               IF TAL > 0
+                 INSPECT REC(1:CNT) REPLACING ALL 'three' BY 'th3ee'
+                 SET LETTER-FOUND TO TRUE
+               END-IF
              END-IF
-           MOVE 0 TO CN2
 
-             INSPECT REC(1:CNT) TALLYING CN2 FOR ALL 'four'
-             IF CN2 > 0
-               INSPECT REC(1:CNT) REPLACING ALL 'four' by 'fo4r'
-               MOVE 'Y' TO FND
-               CONTINUE
+             IF NOT LETTER-FOUND
+               INSPECT REC(1:CNT) TALLYING TAL FOR ALL 'four'
+               IF TAL > 0
+                 INSPECT REC(1:CNT) REPLACING ALL 'four' BY 'fo4r'
+                 SET LETTER-FOUND TO TRUE
+               END-IF
              END-IF
-           MOVE 0 TO CN2
 
-             INSPECT REC(1:CNT) TALLYING CN2 FOR ALL 'five'
-             IF CN2 > 0
-               INSPECT REC(1:CNT) REPLACING ALL 'five' by 'fi5e'
-               MOVE 'Y' TO FND
-               CONTINUE
+             IF NOT LETTER-FOUND
+               INSPECT REC(1:CNT) TALLYING TAL FOR ALL 'five'
+               IF TAL > 0
+                 INSPECT REC(1:CNT) REPLACING ALL 'five' BY 'fi5e'
+                 SET LETTER-FOUND TO TRUE
+               END-IF
              END-IF
-           MOVE 0 TO CN2
 
-             INSPECT REC(1:CNT) TALLYING CN2 FOR ALL 'six'
-             IF CN2 > 0
-               INSPECT REC(1:CNT) REPLACING ALL 'six' by 's6x'
-               MOVE 'Y' TO FND
-               CONTINUE
+             IF NOT LETTER-FOUND
+               INSPECT REC(1:CNT) TALLYING TAL FOR ALL 'six'
+               IF TAL > 0
+                 INSPECT REC(1:CNT) REPLACING ALL 'six' BY 's6x'
+                 SET LETTER-FOUND TO TRUE
+               END-IF
              END-IF
-           MOVE 0 TO CN2
 
-             INSPECT REC(1:CNT) TALLYING CN2 FOR ALL 'seven'
-             IF CN2 > 0
-               INSPECT REC(1:CNT) REPLACING ALL 'seven' by 'se7en'
-               MOVE 'Y' TO FND
-               CONTINUE
+             IF NOT LETTER-FOUND
+               INSPECT REC(1:CNT) TALLYING TAL FOR ALL 'seven'
+               IF TAL > 0
+                 INSPECT REC(1:CNT) REPLACING ALL 'seven' BY 'se7en'
+                 SET LETTER-FOUND TO TRUE
+               END-IF
              END-IF
-           MOVE 0 TO CN2
 
-             INSPECT REC(1:CNT) TALLYING CN2 FOR ALL 'eight'
-             IF CN2 > 0
-               INSPECT REC(1:CNT) REPLACING ALL 'eight' by 'ei8ht'
-               MOVE 'Y' TO FND
-               CONTINUE
+             IF NOT LETTER-FOUND
+               INSPECT REC(1:CNT) TALLYING TAL FOR ALL 'eight'
+               IF TAL > 0
+                 INSPECT REC(1:CNT) REPLACING ALL 'eight' BY 'ei8ht'
+                 SET LETTER-FOUND TO TRUE
+               END-IF
              END-IF
-           MOVE 0 TO CN2
 
-             INSPECT REC(1:CNT) TALLYING CN2 FOR ALL 'nine'
-             IF CN2 > 0
-               INSPECT REC(1:CNT) REPLACING ALL 'nine' by 'n9ne'
-               MOVE 'Y' TO FND
-               CONTINUE
+             IF NOT LETTER-FOUND
+               INSPECT REC(1:CNT) TALLYING TAL FOR ALL 'nine'
+               IF TAL > 0
+                 INSPECT REC(1:CNT) REPLACING ALL 'nine' BY 'n9ne'
+                 SET LETTER-FOUND TO TRUE
+               END-IF
              END-IF
-           MOVE 0 TO CN2
 
              ADD 1 TO CNT
            END-PERFORM
 
            *> Replace last
-           MOVE SPACE TO FND
            MOVE 1 TO CNT
-           MOVE 0 TO CN2
-           PERFORM UNTIL FND = 'Y' OR CNT > LTH
-             INSPECT REC(LTH - CNT:LTH) TALLYING CN2 FOR ALL 'one'
-             IF CN2 > 0
-               INSPECT REC(LTH - CNT:LTH) REPLACING ALL 'one' by '1  '
-               MOVE 'Y' TO FND
-               CONTINUE
+           MOVE 0 TO TAL
+           MOVE 'N' TO LTR-FND-FLAG
+           PERFORM UNTIL LETTER-FOUND OR CNT > LEN
+             IF NOT LETTER-FOUND
+               INSPECT REC(LEN - CNT:LEN) TALLYING TAL FOR ALL 'one'
+               IF TAL > 0
+                 INSPECT REC(LEN - CNT:LEN)
+                 REPLACING ALL 'one' BY '1  '
+                 SET LETTER-FOUND TO TRUE
+               END-IF
              END-IF
-           MOVE 0 TO CN2
 
-             INSPECT REC(LTH - CNT:LTH) TALLYING CN2 FOR ALL 'two'
-             IF CN2 > 0
-               INSPECT REC(LTH - CNT:LTH) REPLACING ALL 'two' by '2  '
-               MOVE 'Y' TO FND
-               CONTINUE
+             IF NOT LETTER-FOUND
+               INSPECT REC(LEN - CNT:LEN) TALLYING TAL FOR ALL 'two'
+               IF TAL > 0
+                 INSPECT REC(LEN - CNT:LEN)
+                 REPLACING ALL 'two' BY '2  '
+                 SET LETTER-FOUND TO TRUE
+               END-IF
              END-IF
-           MOVE 0 TO CN2
 
-             INSPECT REC(LTH - CNT:LTH) TALLYING CN2 FOR ALL 'three'
-             IF CN2 > 0
-               INSPECT REC(LTH - CNT:LTH)
-               REPLACING ALL 'three' by '3    '
-               MOVE 'Y' TO FND
-               CONTINUE
+             IF NOT LETTER-FOUND
+               INSPECT REC(LEN - CNT:LEN) TALLYING TAL FOR ALL 'three'
+               IF TAL > 0
+                 INSPECT REC(LEN - CNT:LEN)
+                 REPLACING ALL 'three' BY '3    '
+                 SET LETTER-FOUND TO TRUE
+               END-IF
              END-IF
-           MOVE 0 TO CN2
 
-             INSPECT REC(LTH - CNT:LTH) TALLYING CN2 FOR ALL 'four'
-             IF CN2 > 0
-               INSPECT REC(LTH - CNT:LTH) REPLACING ALL 'four' by '4   '
-               MOVE 'Y' TO FND
-               CONTINUE
+             IF NOT LETTER-FOUND
+               INSPECT REC(LEN - CNT:LEN) TALLYING TAL FOR ALL 'four'
+               IF TAL > 0
+                 INSPECT REC(LEN - CNT:LEN)
+                 REPLACING ALL 'four' BY '4   '
+                 SET LETTER-FOUND TO TRUE
+               END-IF
              END-IF
-           MOVE 0 TO CN2
 
-             INSPECT REC(LTH - CNT:LTH) TALLYING CN2 FOR ALL 'five'
-             IF CN2 > 0
-               INSPECT REC(LTH - CNT:LTH) REPLACING ALL 'five' by '5   '
-               MOVE 'Y' TO FND
-               CONTINUE
+             IF NOT LETTER-FOUND
+               INSPECT REC(LEN - CNT:LEN) TALLYING TAL FOR ALL 'five'
+               IF TAL > 0
+                 INSPECT REC(LEN - CNT:LEN)
+                 REPLACING ALL 'five' BY '5   '
+                 SET LETTER-FOUND TO TRUE
+               END-IF
              END-IF
-           MOVE 0 TO CN2
 
-             INSPECT REC(LTH - CNT:LTH) TALLYING CN2 FOR ALL 'six'
-             IF CN2 > 0
-               INSPECT REC(LTH - CNT:LTH) REPLACING ALL 'six' by '6  '
-               MOVE 'Y' TO FND
-               CONTINUE
+             IF NOT LETTER-FOUND
+               INSPECT REC(LEN - CNT:LEN) TALLYING TAL FOR ALL 'six'
+               IF TAL > 0
+                 INSPECT REC(LEN - CNT:LEN)
+                 REPLACING ALL 'six' BY '6  '
+                 SET LETTER-FOUND TO TRUE
+               END-IF
              END-IF
-           MOVE 0 TO CN2
 
-             INSPECT REC(LTH - CNT:LTH) TALLYING CN2 FOR ALL 'seven'
-             IF CN2 > 0
-               INSPECT REC(LTH - CNT:LTH)
-               REPLACING ALL 'seven' by '7    '
-               MOVE 'Y' TO FND
-               CONTINUE
+             IF NOT LETTER-FOUND
+               INSPECT REC(LEN - CNT:LEN) TALLYING TAL FOR ALL 'seven'
+               IF TAL > 0
+                 INSPECT REC(LEN - CNT:LEN)
+                 REPLACING ALL 'seven' BY '7    '
+                 SET LETTER-FOUND TO TRUE
+               END-IF
              END-IF
-           MOVE 0 TO CN2
 
-             INSPECT REC(LTH - CNT:LTH) TALLYING CN2 FOR ALL 'eight'
-             IF CN2 > 0
-               INSPECT REC(LTH - CNT:LTH)
-               REPLACING ALL 'eight' by '8    '
-               MOVE 'Y' TO FND
-               CONTINUE
+             IF NOT LETTER-FOUND
+               INSPECT REC(LEN - CNT:LEN) TALLYING TAL FOR ALL 'eight'
+               IF TAL > 0
+                 INSPECT REC(LEN - CNT:LEN)
+                 REPLACING ALL 'eight' BY '8    '
+                 SET LETTER-FOUND TO TRUE
+               END-IF
              END-IF
-           MOVE 0 TO CN2
 
-             INSPECT REC(LTH - CNT:LTH) TALLYING CN2 FOR ALL 'nine'
-             IF CN2 > 0
-               INSPECT REC(LTH - CNT:LTH) REPLACING ALL 'nine' by '9   '
-               MOVE 'Y' TO FND
-               CONTINUE
+             IF NOT LETTER-FOUND
+               INSPECT REC(LEN - CNT:LEN) TALLYING TAL FOR ALL 'nine'
+               IF TAL > 0
+                 INSPECT REC(LEN - CNT:LEN)
+                 REPLACING ALL 'nine' BY '9   '
+                 SET LETTER-FOUND TO TRUE
+               END-IF
              END-IF
-           MOVE 0 TO CN2
 
              ADD 1 TO CNT
            END-PERFORM
