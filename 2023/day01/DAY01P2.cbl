@@ -186,7 +186,7 @@
                INSPECT REC(LEN - CNT:LEN) TALLYING TAL FOR ALL 'one'
                IF TAL > 0
                  INSPECT REC(LEN - CNT:LEN)
-                 REPLACING ALL 'one' BY '1  '
+                 REPLACING ALL 'one' BY 'o1e'
                  SET LETTER-FOUND TO TRUE
                END-IF
              END-IF
@@ -195,7 +195,7 @@
                INSPECT REC(LEN - CNT:LEN) TALLYING TAL FOR ALL 'two'
                IF TAL > 0
                  INSPECT REC(LEN - CNT:LEN)
-                 REPLACING ALL 'two' BY '2  '
+                 REPLACING ALL 'two' BY 't2o'
                  SET LETTER-FOUND TO TRUE
                END-IF
              END-IF
@@ -204,7 +204,7 @@
                INSPECT REC(LEN - CNT:LEN) TALLYING TAL FOR ALL 'three'
                IF TAL > 0
                  INSPECT REC(LEN - CNT:LEN)
-                 REPLACING ALL 'three' BY '3    '
+                 REPLACING ALL 'three' BY 'th3ee'
                  SET LETTER-FOUND TO TRUE
                END-IF
              END-IF
@@ -213,7 +213,7 @@
                INSPECT REC(LEN - CNT:LEN) TALLYING TAL FOR ALL 'four'
                IF TAL > 0
                  INSPECT REC(LEN - CNT:LEN)
-                 REPLACING ALL 'four' BY '4   '
+                 REPLACING ALL 'four' BY 'fo4r'
                  SET LETTER-FOUND TO TRUE
                END-IF
              END-IF
@@ -222,7 +222,7 @@
                INSPECT REC(LEN - CNT:LEN) TALLYING TAL FOR ALL 'five'
                IF TAL > 0
                  INSPECT REC(LEN - CNT:LEN)
-                 REPLACING ALL 'five' BY '5   '
+                 REPLACING ALL 'five' BY 'fi5e'
                  SET LETTER-FOUND TO TRUE
                END-IF
              END-IF
@@ -231,7 +231,7 @@
                INSPECT REC(LEN - CNT:LEN) TALLYING TAL FOR ALL 'six'
                IF TAL > 0
                  INSPECT REC(LEN - CNT:LEN)
-                 REPLACING ALL 'six' BY '6  '
+                 REPLACING ALL 'six' BY 's6x'
                  SET LETTER-FOUND TO TRUE
                END-IF
              END-IF
@@ -240,7 +240,7 @@
                INSPECT REC(LEN - CNT:LEN) TALLYING TAL FOR ALL 'seven'
                IF TAL > 0
                  INSPECT REC(LEN - CNT:LEN)
-                 REPLACING ALL 'seven' BY '7    '
+                 REPLACING ALL 'seven' BY 'se7en'
                  SET LETTER-FOUND TO TRUE
                END-IF
              END-IF
@@ -249,7 +249,7 @@
                INSPECT REC(LEN - CNT:LEN) TALLYING TAL FOR ALL 'eight'
                IF TAL > 0
                  INSPECT REC(LEN - CNT:LEN)
-                 REPLACING ALL 'eight' BY '8    '
+                 REPLACING ALL 'eight' BY 'ei8ht'
                  SET LETTER-FOUND TO TRUE
                END-IF
              END-IF
@@ -258,7 +258,7 @@
                INSPECT REC(LEN - CNT:LEN) TALLYING TAL FOR ALL 'nine'
                IF TAL > 0
                  INSPECT REC(LEN - CNT:LEN)
-                 REPLACING ALL 'nine' BY '9   '
+                 REPLACING ALL 'nine' BY 'n9ne'
                  SET LETTER-FOUND TO TRUE
                END-IF
              END-IF
