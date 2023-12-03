@@ -34,9 +34,9 @@
            05 SYM-CNT         PIC S9(4) COMP.
            05 ROW             PIC S9(4) COMP.
            05 PARTS-SUM       PIC S9(9) COMP.
-           05 NUM-TBL OCCURS 142 TIMES.
+           05 NUM-TBL OCCURS 150 TIMES.
               10 NUM-REC      PIC X(142).
-           05 SYM-TBL OCCURS 142 TIMES.
+           05 SYM-TBL OCCURS 150 TIMES.
               10 SYM-REC      PIC X(142).
               
        01  SWITCHES.
@@ -80,7 +80,7 @@
 
            *> Find and add up part numbers.
            PERFORM VARYING ROW FROM 1 BY 1 UNTIL ROW > ROWS
-             PERFORM VARYING CNT FROM 1 BY 1 UNTIL CNT >= REC-LEN
+             PERFORM VARYING CNT FROM 1 BY 1 UNTIL CNT > REC-LEN
                IF NUM-REC(ROW)(CNT:1) IS NUMBERS
                  *> Start of number.
                  IF NUM-FLAG NOT = 'Y'
@@ -117,7 +117,7 @@
            MOVE 'N' TO SYM-FLAG
            MOVE 0 TO SYM-CNT
 
-           PERFORM VARYING CN2 FROM 0 BY 1 UNTIL CN2 > NUM-LEN + 2
+           PERFORM VARYING CN2 FROM 0 BY 1 UNTIL CN2 > NUM-LEN + 1
                                               OR SYM-FOUND
            COMPUTE SYM-CNT = CNT - NUM-LEN - 1 + CN2
              *> Check above for symbols.
@@ -129,8 +129,10 @@
                END-IF
              END-IF
              *> Check current row for symbols.
-             IF SYM-REC(ROW)(SYM-CNT:1) IS SYMBOLS
-               SET SYM-FOUND TO TRUE
+             IF CNT NOT <= 1
+               IF SYM-REC(ROW)(SYM-CNT:1) IS SYMBOLS
+                 SET SYM-FOUND TO TRUE
+               END-IF
              END-IF
              *> Check below for symbols.
              IF ROW NOT >= ROWS
